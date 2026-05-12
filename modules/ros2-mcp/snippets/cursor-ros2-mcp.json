@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ros2": {
+      "command": "$PROJECT/.agent-harness/modules/ros2-mcp/ros2-mcp-wrapper.sh",
+      "args": [],
+      "env": {
+        "ROS_DISTRO": "humble",
+        "ROS_DOMAIN_ID": "0",
+        "ROS2_MCP_READ_ONLY": "1",
+        "ROS_WORKSPACE": "$HOME/ros2_ws",
+        "ROS2_MCP_COMMAND": "uv --directory $HOME/src/ros2_mcp run mcp_ros_2_server"
+      }
+    }
+  }
+}

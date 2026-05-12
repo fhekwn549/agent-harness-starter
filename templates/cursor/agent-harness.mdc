@@ -1,0 +1,30 @@
+---
+description: Cursor용 generic agent harness rules
+alwaysApply: true
+---
+
+## Agent 운영 규칙
+
+### 보호 동작
+
+Cursor에서는 setup에 따라 shell hook이 항상 실행되지 않을 수 있으므로, 아래 항목을 hard rule로 취급합니다.
+
+- Secret을 읽거나 출력하지 않습니다. env file은 example/template을 사용합니다.
+- Git identity를 변경하거나 `git config user.name/user.email`을 실행하지 않습니다.
+- `rm -rf`, `git reset --hard`, `git clean -f`, force push 같은 destructive command는 먼저 확인합니다.
+- Package install/remove, service 변경 같은 privileged system mutation은 먼저 확인합니다.
+
+### Agent 책임
+
+- 사용자 변경을 보존합니다. 명시 요청 없이는 직접 수정하지 않은 파일을 되돌리지 않습니다.
+- Project-local script와 문서화된 command를 우선합니다.
+- 도메인별 작업에서는 계획/수정 전에 `.agent-harness/modules/` 아래의 관련 module rule을 읽습니다.
+- 완료 선언 전 가능한 가장 좁은 관련 검증을 실행합니다.
+- 검증을 실행할 수 없으면 이유와 남은 risk를 말합니다.
+- 마지막에는 변경 파일과 검증 결과를 요약합니다.
+
+### 계획
+
+- 작고 명확한 변경은 바로 진행하고 짧게 보고합니다.
+- 애매하거나 위험한 작업은 편집 전에 목표, 제약, acceptance criteria, 검증 방법을 확인합니다.
+- 여러 단계 구현은 파일, command, 예상 check를 포함한 짧은 plan을 작성합니다.

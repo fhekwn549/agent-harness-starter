@@ -1,0 +1,4 @@
+# Review before merging into ~/.codex/config.toml.
+
+[mcp_servers.playwright]
+command = "$HOME/.local/bin/playwright-mcp"

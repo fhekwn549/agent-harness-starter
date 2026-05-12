@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "$HOME/.local/bin/playwright-mcp"
+    }
+  }
+}
