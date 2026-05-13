@@ -4,15 +4,16 @@ AI coding agent를 안전하게 쓰기 위한 작은 starter package입니다.
 
 이 패키지는 프로젝트 안에 지시문 템플릿, hook script, 설정 snippet, `doctor.sh` 점검 스크립트를 설치합니다. 개인 환경 기본값은 넣지 않고, ROS 2 cleanup, wiki logging, notification, output style 같은 기능은 optional module로 분리합니다.
 
+> **처음 사용하는 환경에 따라 시작점이 다릅니다.**
+>
+> - **Windows** — 먼저 WSL 2 Ubuntu가 필요합니다. 설치부터 첫 데모 실행까지의 단계별 가이드는 [`docs/wsl-demo.md`](docs/wsl-demo.md)를 따라가세요. 끝나면 이 README로 돌아와 `## Harness 설치` 섹션으로 이어집니다.
+> - **macOS / Linux (또는 이미 WSL Ubuntu 안)** — 아래 [`## 사전 준비`](#사전-준비)부터 그대로 진행하면 됩니다.
+
 ## 사전 준비
 
-Windows에서는 WSL 2 Ubuntu 환경을 권장합니다. PowerShell을 관리자 권한으로 열고 WSL을 설치합니다.
+이 섹션은 macOS, Linux, 또는 WSL Ubuntu **안에서** 진행한다고 가정합니다. WSL 자체 설치는 위의 [`docs/wsl-demo.md`](docs/wsl-demo.md)를 참고하세요.
 
-```powershell
-wsl --install -d Ubuntu-22.04
-```
-
-Ubuntu 안에서 기본 도구를 설치합니다.
+기본 도구를 설치합니다.
 
 ```bash
 sudo apt update
