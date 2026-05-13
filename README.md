@@ -4,14 +4,64 @@ AI coding agent를 안전하게 쓰기 위한 작은 starter package입니다.
 
 이 패키지는 프로젝트 안에 지시문 템플릿, hook script, 설정 snippet, `doctor.sh` 점검 스크립트를 설치합니다. 개인 환경 기본값은 넣지 않고, ROS 2 cleanup, wiki logging, notification, output style 같은 기능은 optional module로 분리합니다.
 
-## 설치
+## 사전 준비
+
+Windows에서는 WSL 2 Ubuntu 환경을 권장합니다. PowerShell을 관리자 권한으로 열고 WSL을 설치합니다.
+
+```powershell
+wsl --install -d Ubuntu-22.04
+```
+
+Ubuntu 안에서 기본 도구를 설치합니다.
+
+```bash
+sudo apt update
+sudo apt install -y git curl jq python3 python3-pip
+```
+
+Codex CLI는 npm으로 설치합니다. Node.js는 LTS 버전을 사용합니다.
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+. "$HOME/.nvm/nvm.sh"
+nvm install --lts
+node --version
+npm --version
+```
+
+```bash
+npm i -g @openai/codex
+codex --version
+```
+
+Claude Code는 native installer를 권장합니다.
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+claude --version
+claude doctor
+```
+
+설치 후 `codex` 또는 `claude`를 처음 실행하면 로그인 흐름이 시작됩니다.
+
+참고:
+
+- Codex CLI: <https://developers.openai.com/codex/cli>
+- Claude Code setup: <https://code.claude.com/docs/en/setup>
+
+## Harness 설치
 
 ```bash
 git clone https://github.com/fhekwn549/agent-harness-starter.git
 cd agent-harness-starter
-./install.sh --target ~/demo-agent-project --tool codex
+mkdir -p ~/demo-agent-project
+./install.sh --target ~/demo-agent-project --tool all
 ./doctor.sh ~/demo-agent-project
 ```
+
+`--tool all`은 `AGENTS.md`, `CLAUDE.md`, Cursor rule, Codex/Claude hook snippet을 함께 생성합니다. 한 도구만 적용하려면 `codex`, `claude`, `cursor` 중 하나를 지정합니다.
+
+생성된 snippet은 자동으로 global 설정에 합치지 않습니다. 내용을 검토한 뒤 필요한 항목만 사용자의 Codex/Claude/Cursor 설정에 추가합니다.
 
 Cursor:
 
@@ -58,10 +108,26 @@ Hook은 target project의 `.agent-harness/` 안에 설치됩니다. Installer는
 ├── hooks/
 │   ├── common/
 │   ├── codex/
+│   │   ├── pre-bash.sh
+│   │   ├── pre-file.sh
+│   │   └── post-edit.sh
 │   └── claude/
+│       ├── pre-bash.sh
+│       ├── pre-file.sh
+│       └── post-edit.sh
 ├── modules/
 └── snippets/
 ```
+
+Hook script 역할:
+
+| Script | 시점 | 역할 |
+|---|---|---|
+| `pre-bash.sh` | shell command 실행 전 | recursive forced deletion, destructive git, git identity 변경, credential 경로 접근, privileged/system mutation 명령 차단 |
+| `pre-file.sh` | 파일 읽기/쓰기/수정 전 | local environment, SSH key, cloud credential, Kubernetes config처럼 민감한 파일 접근 차단 |
+| `post-edit.sh` | 파일 수정 후 | Python 파일이 바뀌었고 `ruff`가 설치되어 있으면 `ruff check` 실행. 실패해도 후처리 경고만 출력 |
+
+발표자료에서 `block-rm-rf.sh`, `block-env-access.sh`처럼 설명한 이름은 개념 단위 예시입니다. 실제 starter repo에서는 도구별 hook entrypoint를 줄이기 위해 `pre-bash.sh`, `pre-file.sh`, `post-edit.sh` 세 파일이 공통 guardrail 함수를 호출합니다.
 
 ## 설치 위치
 
