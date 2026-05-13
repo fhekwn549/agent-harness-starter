@@ -202,7 +202,7 @@ case "$TOOL" in
   all) install_codex; install_claude; install_cursor ;;
 esac
 
-for module in "${MODULES[@]}"; do
+for module in "${MODULES[@]+"${MODULES[@]}"}"; do
   install_module "$module"
 done
 

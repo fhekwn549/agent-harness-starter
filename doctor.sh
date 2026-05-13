@@ -30,7 +30,13 @@ check "git available" has_cmd git
 check "jq available" has_cmd jq
 check "bash available" has_cmd bash
 check "python available" has_cmd python3
-check "AGENTS.md exists" has_file "$TARGET/AGENTS.md"
+
+if [ -f "$TARGET/AGENTS.md" ] || [ -f "$TARGET/CLAUDE.md" ]; then
+  printf 'PASS instruction file exists\n'
+else
+  printf 'FAIL no AGENTS.md or CLAUDE.md\n' >&2
+  failures=$((failures + 1))
+fi
 
 if [ -d "$TARGET/.agent-harness" ]; then
   while IFS= read -r script; do
@@ -38,27 +44,45 @@ if [ -d "$TARGET/.agent-harness" ]; then
   done < <(find "$TARGET/.agent-harness" -type f -name '*.sh' | sort)
 fi
 
-if [ -x "$TARGET/.agent-harness/hooks/codex/pre-bash.sh" ]; then
+run_pre_bash_check() {
+  local tool="$1" label="$2" payload="$3"
+  local hook="$TARGET/.agent-harness/hooks/$tool/pre-bash.sh"
+  [ -x "$hook" ] || return 0
   set +e
-  printf '{"tool_input":{"command":"git config user.email test@example.com"}}' | "$TARGET/.agent-harness/hooks/codex/pre-bash.sh" >/tmp/agent-harness-doctor.out 2>&1
-  status=$?
+  printf '%s' "$payload" | "$hook" >/tmp/agent-harness-doctor.out 2>&1
+  local status=$?
   set -e
-  [ "$status" -eq 2 ] && printf 'PASS block git identity\n' || { printf 'FAIL block git identity\n' >&2; failures=$((failures + 1)); }
+  if [ "$status" -eq 2 ]; then
+    printf 'PASS [%s] %s\n' "$tool" "$label"
+  else
+    printf 'FAIL [%s] %s\n' "$tool" "$label" >&2
+    failures=$((failures + 1))
+  fi
+}
 
+run_pre_file_check() {
+  local tool="$1"
+  local hook="$TARGET/.agent-harness/hooks/$tool/pre-file.sh"
+  [ -x "$hook" ] || return 0
   set +e
-  printf '{"tool_input":{"command":"rm -rf build"}}' | "$TARGET/.agent-harness/hooks/codex/pre-bash.sh" >/tmp/agent-harness-doctor.out 2>&1
-  status=$?
+  printf '{"tool_input":{"file_path":"%s/.env"}}' "$TARGET" | "$hook" >/tmp/agent-harness-doctor.out 2>&1
+  local status=$?
   set -e
-  [ "$status" -eq 2 ] && printf 'PASS block rm -rf\n' || { printf 'FAIL block rm -rf\n' >&2; failures=$((failures + 1)); }
-fi
+  if [ "$status" -eq 2 ]; then
+    printf 'PASS [%s] block .env file\n' "$tool"
+  else
+    printf 'FAIL [%s] block .env file\n' "$tool" >&2
+    failures=$((failures + 1))
+  fi
+}
 
-if [ -x "$TARGET/.agent-harness/hooks/codex/pre-file.sh" ]; then
-  set +e
-  printf '{"tool_input":{"file_path":"%s/.env"}}' "$TARGET" | "$TARGET/.agent-harness/hooks/codex/pre-file.sh" >/tmp/agent-harness-doctor.out 2>&1
-  status=$?
-  set -e
-  [ "$status" -eq 2 ] && printf 'PASS block .env file\n' || { printf 'FAIL block .env file\n' >&2; failures=$((failures + 1)); }
-fi
+for tool in codex claude; do
+  run_pre_bash_check "$tool" "block git identity" \
+    '{"tool_input":{"command":"git config user.email test@example.com"}}'
+  run_pre_bash_check "$tool" "block rm -rf" \
+    '{"tool_input":{"command":"rm -rf build"}}'
+  run_pre_file_check "$tool"
+done
 
 rm -f /tmp/agent-harness-doctor.out
 
