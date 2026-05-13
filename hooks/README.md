@@ -23,6 +23,16 @@ Agent가 도구를 실행하기 **직전·직후**에 자동으로 끼어드는 
 
 Cursor는 shell hook이 항상 실행되지 않으므로, 같은 보호는 `.cursor/rules/*.mdc`의 rule 문장으로 대신 전달됩니다. install.sh가 `--tool cursor`로 설치 시 자동으로 처리합니다.
 
+## settings.json / config.toml은 어떻게 연결되나
+
+`install.sh`는 사용자의 글로벌 설정을 조용히 바꾸지 않습니다. 대신 `<target>/.agent-harness/snippets/` 아래에 도구별 예시 snippet을 만들어 두고, 사용자가 한 번 검토한 뒤 자신의 글로벌 설정에 직접 옮기는 흐름입니다.
+
+- **Claude Code**: `claude-settings-hooks.json` → `~/.claude/settings.json`의 `hooks` 키에 **머지**해서 추가 (기존 `hooks`가 있으면 덮어쓰지 말고 항목을 합칠 것)
+- **Codex CLI**: `codex-config.toml` → `~/.codex/config.toml` 끝에 **그대로 이어 붙이기**. `[[hooks.<Event>]]`는 TOML의 array-of-tables라 중복 선언이 안전
+- **Cursor**: `.cursor/rules/agent-harness.mdc`로 프로젝트 안에 자동 생성. 글로벌 설정 병합 불필요
+
+각 snippet 파일 첫 줄에 `Review before adding to ...` 주석이 있으니, 한 번 읽고 자신의 글로벌 설정에 옮기면 됩니다.
+
 ## 직접 손대지 않는다
 
 이 폴더의 `.sh` 파일은 `install.sh`가 target project의 `.agent-harness/hooks/`로 복사합니다. 동작이 의심되면 `doctor.sh`로 먼저 점검하고, 본문 수정은 fork 후 진행하는 것을 권장합니다.
